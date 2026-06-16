@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Japanese Auto Price Elasticity Analysis</title>
+<style>
+  :root{--ink:#0f1117;--ink-light:#4a4f5e;--border:#dde1ea;--bg:#f7f8fc;--white:#ffffff;--accent:#1a56db;--accent-dim:#e8eefb;--warn:#c0392b;--warn-dim:#fdf0ee;--green:#1a7f4b;--green-dim:#eaf5ef;--amber:#b45309;--amber-dim:#fef3e2;--mono:'Courier New',Courier,monospace}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Georgia',serif;font-size:16px;line-height:1.7;color:var(--ink);background:var(--bg)}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .page-wrap{max-width:860px;margin:0 auto;padding:0 24px 80px}
+  header{background:var(--ink);color:var(--white);padding:56px 0 44px;margin-bottom:0}
+  header .page-wrap{padding-top:0;padding-bottom:0}
+  .eyebrow{font-family:'Arial',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8b93a8;margin-bottom:14px}
+  h1{font-size:clamp(24px,4vw,38px);font-weight:normal;line-height:1.2;letter-spacing:-.02em;margin-bottom:18px}
+  h1 em{font-style:italic;color:#8b93a8}
+  .meta{font-family:'Arial',sans-serif;font-size:13px;color:#8b93a8;display:flex;flex-wrap:wrap;gap:20px}
+  .meta span::before{content:'-- '}
+  .sticky-nav{position:sticky;top:0;background:var(--white);border-bottom:1px solid var(--border);z-index:100;padding:10px 0}
+  .sticky-nav .page-wrap{display:flex;gap:24px;flex-wrap:wrap;padding-top:0;padding-bottom:0}
+  .sticky-nav a{font-family:'Arial',sans-serif;font-size:12.5px;color:var(--ink-light);font-weight:500}
+  .sticky-nav a:hover{color:var(--accent);text-decoration:none}
+  .exec-summary{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--accent);padding:28px 32px;margin:40px 0 48px;border-radius:0 6px 6px 0}
+  .exec-summary h2{font-family:'Arial',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .exec-summary p{font-size:15.5px;margin-bottom:10px}
+  .exec-summary p:last-child{margin-bottom:0}
+  .kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:16px;margin-bottom:56px}
+  .kpi{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:20px 18px;text-align:center}
+  .kpi .num{font-size:26px;font-weight:700;font-family:'Arial',sans-serif;letter-spacing:-.03em;line-height:1;margin-bottom:6px}
+  .kpi .num.warn{color:var(--warn)}.kpi .num.good{color:var(--green)}.kpi .num.amber{color:var(--amber)}.kpi .num.blue{color:var(--accent)}
+  .kpi .label{font-family:'Arial',sans-serif;font-size:11.5px;color:var(--ink-light);line-height:1.4}
+  .section{margin-bottom:56px}
+  .section-label{font-family:'Arial',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:6px}
+  h2.section-title{font-size:22px;font-weight:normal;letter-spacing:-.01em;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .finding{background:var(--white);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow:hidden}
+  .finding-header{display:flex;align-items:flex-start;gap:16px;padding:22px 24px 18px;border-bottom:1px solid var(--border)}
+  .finding-number{font-family:'Arial',sans-serif;font-size:11px;font-weight:700;color:var(--white);background:var(--ink);border-radius:4px;padding:3px 7px;flex-shrink:0;margin-top:2px}
+  .finding-title{font-size:16.5px;font-weight:normal;line-height:1.35}
+  .finding-body{padding:20px 24px}
+  .finding-body p{font-size:14.5px;margin-bottom:12px}
+  .finding-body p:last-child{margin-bottom:0}
+  .impact-block{border-radius:6px;padding:16px 18px;margin-top:14px;margin-bottom:14px}
+  .impact-block.red{background:var(--warn-dim);border-left:3px solid var(--warn)}
+  .impact-block.green{background:var(--green-dim);border-left:3px solid var(--green)}
+  .impact-block.amber{background:var(--amber-dim);border-left:3px solid var(--amber)}
+  .impact-block.blue{background:var(--accent-dim);border-left:3px solid var(--accent)}
+  .impact-label{font-family:'Arial',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+  .impact-block.red .impact-label{color:var(--warn)}.impact-block.green .impact-label{color:var(--green)}
+  .impact-block.amber .impact-label{color:var(--amber)}.impact-block.blue .impact-label{color:var(--accent)}
+  .impact-block p{font-size:14px;line-height:1.6;margin:0}
+  .data-table-wrap{overflow-x:auto;margin:16px 0}
+  table{width:100%;border-collapse:collapse;font-family:'Arial',sans-serif;font-size:13px}
+  th{background:var(--ink);color:var(--white);text-align:left;padding:9px 12px;font-weight:600;font-size:12px;letter-spacing:.04em}
+  td{padding:9px 12px;border-bottom:1px solid var(--border)}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:var(--bg)}
+  .neg{color:var(--warn);font-weight:700}.pos{color:var(--green);font-weight:700}.amber{color:var(--amber)}
+  .rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .rec-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:20px}
+  .rec-priority{font-family:'Arial',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+  .rec-priority.p1{color:var(--warn)}.rec-priority.p2{color:var(--amber)}.rec-priority.p3{color:var(--accent)}
+  .rec-card h3{font-size:15px;font-weight:normal;margin-bottom:10px;line-height:1.3}
+  .rec-card p{font-size:13.5px;color:var(--ink-light);line-height:1.6;margin-bottom:10px}
+  .rec-card p:last-child{margin-bottom:0}
+  .rec-impact{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;color:var(--ink);margin-top:10px}
+  .model-stat{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:4px 10px;margin:3px 4px 3px 0;word-break:break-all}
+  .e-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-family:'Arial',sans-serif;font-size:13px}
+  .e-label{width:70px;text-align:right;color:var(--ink-light);flex-shrink:0}
+  .e-bar-bg{flex:1;background:var(--border);border-radius:4px;height:24px;position:relative}
+  .e-bar{height:24px;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:12px;font-weight:700;color:var(--white)}
+  .e-val{width:80px;font-weight:700;flex-shrink:0}
+  footer{border-top:1px solid var(--border);padding-top:28px;margin-top:64px;font-family:'Arial',sans-serif;font-size:12.5px;color:var(--ink-light);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+  @media(max-width:600px){.exec-summary{padding:20px 18px}.finding-header,.finding-body{padding:16px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="page-wrap">
+    <p class="eyebrow">Automotive Economics -- Econometric Analysis</p>
+    <h1>Which Japanese automakers <em>can raise prices</em><br>without losing buyers? The data ranks them.</h1>
+    <div class="meta">
+      <span>Julian Batto-Hokson</span>
+      <span>5 manufacturers, 17 years, 2008 to 2025</span>
+      <span>Python, SQL, Statsmodels, Tableau</span>
+      <span>March 2026</span>
+    </div>
+  </div>
+</header>
+<nav class="sticky-nav"><div class="page-wrap"><a href="#summary">Summary</a><a href="#elasticity">Elasticity</a><a href="#findings">Findings</a><a href="#recommendations">Recommendations</a><a href="#model">Model</a></div></nav>
+<div class="page-wrap">
+<section id="summary" class="exec-summary">
+  <h2>Executive Summary</h2>
+  <p>Price elasticity tells a pricing team exactly what a brand can get away with. A brand with low elasticity can raise prices with minimal volume loss. A brand with high elasticity bleeds buyers the moment it does. This analysis measures that number for Toyota, Honda, Nissan, Subaru, and Mazda across 17 years of US sales data.</p>
+  <p>The results are not equal. Subaru's elasticity of -0.76 means a 3% price increase costs roughly 2.3% of volume -- about 5,800 units on its current base. Nissan's elasticity of -1.45 means the same 3% increase costs 4.35% of volume -- roughly 22,600 units. That difference is a strategic moat. One brand has pricing power. The other is trapped in volume-driven competition.</p>
+  <p>GDP growth and financing rates are not background noise here. They are active demand drivers. Nissan and Mazda, the two most price-sensitive brands, are also the most exposed to a rate-hiking cycle. That combination compounds over time.</p>
+</section>
+<div class="kpi-strip">
+  <div class="kpi"><div class="num good">-0.76</div><div class="label">Subaru elasticity -- strongest pricing power</div></div>
+  <div class="kpi"><div class="num warn">-1.45</div><div class="label">Nissan elasticity -- highest volume risk on any price move</div></div>
+  <div class="kpi"><div class="num blue">37.3%</div><div class="label">Toyota market share across the 5-brand period</div></div>
+  <div class="kpi"><div class="num good">+170.8%</div><div class="label">Subaru volume growth 2008 to 2025</div></div>
+  <div class="kpi"><div class="num warn">-1.1%</div><div class="label">Nissan volume growth over the same period</div></div>
+  <div class="kpi"><div class="num amber">171.9 pp</div><div class="label">Growth gap between Subaru and Nissan</div></div>
+</div>
+<section id="elasticity" class="section">
+  <p class="section-label">Core Metric</p>
+  <h2 class="section-title">Price elasticity by brand, ranked least to most sensitive</h2>
+  <p style="font-size:14.5px;color:var(--ink-light);margin-bottom:20px">Elasticity measures percentage volume loss per 1% price increase. Closer to zero means stronger pricing power.</p>
+  <div style="margin:20px 0">
+    <div class="e-row"><span class="e-label">Subaru</span><div class="e-bar-bg"><div class="e-bar" style="width:52%;background:var(--green)">-0.76</div></div><span class="e-val pos">Strongest</span></div>
+    <div class="e-row"><span class="e-label">Honda</span><div class="e-bar-bg"><div class="e-bar" style="width:68%;background:#2e86c1">-0.98</div></div><span class="e-val" style="color:#2e86c1">Moderate</span></div>
+    <div class="e-row"><span class="e-label">Toyota</span><div class="e-bar-bg"><div class="e-bar" style="width:77%;background:var(--amber)">-1.12</div></div><span class="e-val amber">Mid-high</span></div>
+    <div class="e-row"><span class="e-label">Mazda</span><div class="e-bar-bg"><div class="e-bar" style="width:85%;background:#e67e22">-1.23</div></div><span class="e-val" style="color:#e67e22">High</span></div>
+    <div class="e-row"><span class="e-label">Nissan</span><div class="e-bar-bg"><div class="e-bar" style="width:100%;background:var(--warn)">-1.45</div></div><span class="e-val neg">Most sensitive</span></div>
+  </div>
+  <div class="impact-block blue"><p class="impact-label">How to read this</p><p>A 3% price increase on Subaru's line loses approximately 5,800 units annually. The same increase on Nissan's line loses approximately 22,600 units. Whether the per-unit margin gain outweighs the volume loss is a breakeven calculation the pricing team runs -- but these elasticities define the range of acceptable price moves for each brand.</p></div>
+</section>
+<section id="findings" class="section">
+  <p class="section-label">Analysis</p>
+  <h2 class="section-title">What the data shows -- and one interpretation by decision area</h2>
+  <div class="finding">
+    <div class="finding-header"><span class="finding-number">01</span><span class="finding-title">Subaru's brand positioning is a quantifiable pricing moat</span></div>
+    <div class="finding-body">
+      <p>Subaru's -0.76 elasticity is the lowest in the analysis -- buyers are the least responsive to price changes. Combined with +170.8% volume growth from 2008 to 2025, this is not a niche outcome. Subaru built genuine brand equity in specific segments that insulates it from competitive pricing pressure.</p>
+      <div class="impact-block green"><p class="impact-label">Pricing implication</p><p>Subaru can raise prices without proportional volume loss. A 3% price increase translates to roughly 2.3% volume reduction -- approximately 5,800 units on a ~253K annual base. At a rough average transaction value of $36,000 (consistent with Subaru's premium positioning), that lost volume represents approximately $209M. A 3% price increase on the remaining ~247K units at $36K average generates approximately $266M in additional revenue -- suggesting a net positive before cost considerations. This is a rough estimate; actual margin impact depends on cost structure. Volume discounting would erode the brand equity that creates the elasticity advantage. Price increases should reinforce premium positioning, not match competitor promotions.</p></div>
+    </div>
+  </div>
+  <div class="finding">
+    <div class="finding-header"><span class="finding-number">02</span><span class="finding-title">Nissan is in a high-sensitivity, low-growth position</span></div>
+    <div class="finding-body">
+      <p>Nissan's -1.45 elasticity is the highest in the analysis. Volume declined 1.1% from 2008 to 2025 while competitors grew. High price sensitivity combined with flat-to-declining volume is the signature of a brand competing primarily on price in a segment where that strategy has a ceiling.</p>
+      <div class="data-table-wrap"><table><thead><tr><th>Brand</th><th>Elasticity</th><th>2008-2025 Growth</th><th>Strategic Position</th></tr></thead><tbody>
+        <tr><td>Subaru</td><td class="pos">-0.76</td><td class="pos">+170.8%</td><td>Premium niche -- pricing power</td></tr>
+        <tr><td>Honda</td><td>-0.98</td><td class="neg">-6.2%</td><td>Mid-market -- margin via brand loyalty</td></tr>
+        <tr><td>Toyota</td><td>-1.12</td><td class="pos">+2.4%</td><td>Market leader -- balanced pricing</td></tr>
+        <tr><td>Mazda</td><td>-1.23</td><td class="pos">+37.3%</td><td>Specialty -- growth despite sensitivity</td></tr>
+        <tr><td>Nissan</td><td class="neg">-1.45</td><td class="neg">-1.1%</td><td>Value segment -- volume trap</td></tr>
+      </tbody></table></div>
+      <div class="impact-block red"><p class="impact-label">Strategy Team</p><p>A 3% price increase on Nissan loses approximately 22,600 units annually. At a rough average transaction value of $28,000 (consistent with Nissan's mid-market positioning), that is approximately $633M in revenue at risk -- stated as an estimate using an assumed ASP, not a sourced figure. The per-unit margin gain from a 3% price increase would need to be extraordinarily high to offset that volume loss. The path out is product differentiation that justifies a price premium -- not a price cut, which accelerates margin erosion. The benchmark target: compress Nissan's elasticity toward Honda's -0.98. That is a structural repositioning, not a quarterly pricing adjustment.</p></div>
+    </div>
+  </div>
+  <div class="finding">
+    <div class="finding-header"><span class="finding-number">03</span><span class="finding-title">A rate-hiking cycle hits Nissan and Mazda hardest</span></div>
+    <div class="finding-body">
+      <p>Financing rates are a significant demand driver across all five brands. Interest rate changes function as an effective price increase without any manufacturer action. The brands with the highest price sensitivity are also the most exposed when rates rise -- their buyers are already price-conscious before financing costs are applied.</p>
+      <div class="impact-block amber"><p class="impact-label">Finance / Risk</p><p>Under a rate-rising environment, Nissan and Mazda face compounding pressure: higher financing costs reduce buyer purchasing power AND their existing elasticity means those buyers are more likely to exit. Subaru's inelastic demand provides a natural hedge. A 100 basis point rate increase should trigger a Nissan and Mazda volume forecast revision before it triggers a price adjustment.</p></div>
+    </div>
+  </div>
+  <div class="finding">
+    <div class="finding-header"><span class="finding-number">04</span><span class="finding-title">GDP growth is a usable leading indicator for annual volume planning</span></div>
+    <div class="finding-body">
+      <p>Sales across all five manufacturers are pro-cyclical. They grow during economic expansions and contract during recessions. The 2008-2009 financial crisis, 2020 pandemic disruption, and 2022-2025 supply chain volatility are all visible in the trend data.</p>
+      <div class="impact-block blue"><p class="impact-label">Demand forecasting implication</p><p>A one-page sensitivity model mapping GDP scenarios to brand-level volume changes would give planning teams a defensible range for inventory and production targets. The elasticity coefficients from this analysis are the inputs. The GDP growth series is already in the model -- no new data collection required.</p></div>
+    </div>
+  </div>
+</section>
+<section id="recommendations" class="section">
+  <p class="section-label">Action Items</p>
+  <h2 class="section-title">Recommended next steps by stakeholder</h2>
+  <div class="rec-grid">
+    <div class="rec-card"><p class="rec-priority p1">Pricing Team</p><h3>Build a breakeven pricing table per brand</h3><p>For each brand, what price increase is exactly offset by volume loss? The elasticity coefficients make this one calculation. Subaru's breakeven price increase is materially higher than Nissan's.</p><div class="rec-impact">Output: max price increase before revenue turns negative, per brand</div></div>
+    <div class="rec-card"><p class="rec-priority p1">Strategy -- Nissan</p><h3>Target Honda's -0.98 as the repositioning benchmark</h3><p>Compressing Nissan's elasticity from -1.45 toward Honda's -0.98 requires product differentiation that reduces buyer price sensitivity. EV investment and technology-led models are the mechanism.</p><div class="rec-impact">Gap: 0.47 elasticity points. Translates to recovering ~13,000+ units of volume buffer on a 3% price move</div></div>
+    <div class="rec-card"><p class="rec-priority p2">Risk / Finance</p><h3>Run rate-sensitivity scenarios quarterly</h3><p>Map 50 bp and 100 bp rate increases to brand-level volume impact using the financing rate correlations in this analysis. Flag Nissan and Mazda for volume forecast revision in rising-rate environments.</p><div class="rec-impact">Quick win: one-page scenario table added to quarterly demand forecast</div></div>
+    <div class="rec-card"><p class="rec-priority p2">Subaru -- Pricing</p><h3>Time price increases to new model launches</h3><p>Subaru has pricing authority its competitors lack. Volume discounting would erode the brand equity creating that elasticity advantage. Price increases tied to launches reinforce the premium position.</p><div class="rec-impact">Guard rail: avoid discount programs that pull Subaru into price competition with Nissan and Mazda</div></div>
+  </div>
+</section>
+<section id="model" class="section">
+  <p class="section-label">Technical Reference</p>
+  <h2 class="section-title">Model specification and data scope</h2>
+  <div class="finding">
+    <div class="finding-header"><span class="finding-number" style="background:var(--accent)">M1</span><span class="finding-title">Log-linear OLS -- price elasticity model</span></div>
+    <div class="finding-body">
+      <p>A log-linear specification allows direct coefficient interpretation as elasticities, controlling for GDP, financing rates, gas prices, disposable income, unemployment, and USD/JPY exchange rate simultaneously.</p>
+      <p><span class="model-stat">ln(Sales) = b0 + b1*ln(Price) + b2*ln(GasPrice) + b3*InterestRate + b4*ln(Income) + b5*Unemployment + b6*ln(ExchangeRate) + e</span></p>
+      <div class="impact-block amber"><p class="impact-label">Known limitation</p><p>Constant elasticity is assumed across the full 2008-2025 period. Elasticity likely shifted after 2020 due to supply chain constraints. A follow-on model splitting pre- and post-2020 would test whether elasticities are stable or regime-dependent.</p></div>
+    </div>
+  </div>
+  <div style="margin-top:20px"><p class="section-label" style="margin-bottom:10px">Data Scope</p>
+  <div class="data-table-wrap"><table><thead><tr><th>Dimension</th><th>Value</th></tr></thead><tbody>
+    <tr><td>Analysis period</td><td>2008 to 2025 (17 years, semi-annual observations)</td></tr>
+    <tr><td>Manufacturers</td><td>Toyota, Honda, Nissan, Subaru, Mazda</td></tr>
+    <tr><td>Sales data</td><td>GoodCarBadCar.net -- annual US sales by manufacturer</td></tr>
+    <tr><td>Economic controls</td><td>CPI, finance rates, GDP growth, loan availability, disposable income, USD/JPY (FRED)</td></tr>
+    <tr><td>Modeling</td><td>Python -- Statsmodels OLS</td></tr>
+    <tr><td>Visualization</td><td>Matplotlib, Seaborn, Tableau Public</td></tr>
+  </tbody></table></div></div>
+</section>
+</div>
+<footer style="max-width:860px;margin:0 auto;padding:0 24px 48px"><span>Julian Batto-Hokson · March 2026</span><span><a href="https://github.com/jbattohokson/Volume_Discount_Analysis">GitHub Repository</a> · Python · SQL · Statsmodels · Tableau</span></footer>
+</body></html>
