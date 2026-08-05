@@ -1,7 +1,7 @@
 # Which Japanese automakers can raise prices without losing buyers?
 ### The data ranks them.
 
-> **[Live Report](https://jbattohokson.github.io/Volume_Discount_Analysis/Volume_Discount_Analysis.html)** | [GitHub Repo](https://github.com/jbattohokson/Volume_Discount_Analysis)
+> **[Live Report](https://jbattohokson.github.io/Volume_Discount_Analysis/Volume_Discount_Analysis.html)** | **[Tableau Dashboard](https://public.tableau.com/app/profile/julian.batto.hokson/viz/Japanese_Car_Demand_Elasticity_Analysis/Dashboard2)** | [GitHub Repo](https://github.com/jbattohokson/Volume_Discount_Analysis)
 
 ---
 
