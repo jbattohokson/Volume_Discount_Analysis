@@ -1,0 +1,82 @@
+Variable_1,Variable_2,Correlation
+Toyota,Toyota,1.0
+Toyota,Honda,0.786
+Toyota,Mazda,0.523
+Toyota,Nissan,0.647
+Toyota,Subaru,0.678
+Toyota,CPI,0.18
+Toyota,Finance Rate of New Car (Weighted),0.313
+Toyota,New Car Loan Amt.,0.188
+Toyota,GDP Growth,0.282
+Honda,Toyota,0.786
+Honda,Honda,1.0
+Honda,Mazda,0.353
+Honda,Nissan,0.807
+Honda,Subaru,0.488
+Honda,CPI,-0.175
+Honda,Finance Rate of New Car (Weighted),0.158
+Honda,New Car Loan Amt.,-0.172
+Honda,GDP Growth,0.233
+Mazda,Toyota,0.523
+Mazda,Honda,0.353
+Mazda,Mazda,1.0
+Mazda,Nissan,0.134
+Mazda,Subaru,0.632
+Mazda,CPI,0.766
+Mazda,Finance Rate of New Car (Weighted),0.456
+Mazda,New Car Loan Amt.,0.667
+Mazda,GDP Growth,0.365
+Nissan,Toyota,0.647
+Nissan,Honda,0.807
+Nissan,Mazda,0.134
+Nissan,Nissan,1.0
+Nissan,Subaru,0.414
+Nissan,CPI,-0.264
+Nissan,Finance Rate of New Car (Weighted),-0.039
+Nissan,New Car Loan Amt.,-0.327
+Nissan,GDP Growth,0.089
+Subaru,Toyota,0.678
+Subaru,Honda,0.488
+Subaru,Mazda,0.632
+Subaru,Nissan,0.414
+Subaru,Subaru,1.0
+Subaru,CPI,0.579
+Subaru,Finance Rate of New Car (Weighted),0.478
+Subaru,New Car Loan Amt.,0.673
+Subaru,GDP Growth,0.317
+CPI,Toyota,0.18
+CPI,Honda,-0.175
+CPI,Mazda,0.766
+CPI,Nissan,-0.264
+CPI,Subaru,0.579
+CPI,CPI,1.0
+CPI,Finance Rate of New Car (Weighted),0.489
+CPI,New Car Loan Amt.,0.916
+CPI,GDP Growth,0.229
+Finance Rate of New Car (Weighted),Toyota,0.313
+Finance Rate of New Car (Weighted),Honda,0.158
+Finance Rate of New Car (Weighted),Mazda,0.456
+Finance Rate of New Car (Weighted),Nissan,-0.039
+Finance Rate of New Car (Weighted),Subaru,0.478
+Finance Rate of New Car (Weighted),CPI,0.489
+Finance Rate of New Car (Weighted),Finance Rate of New Car (Weighted),1.0
+Finance Rate of New Car (Weighted),New Car Loan Amt.,0.528
+Finance Rate of New Car (Weighted),GDP Growth,-0.135
+New Car Loan Amt.,Toyota,0.188
+New Car Loan Amt.,Honda,-0.172
+New Car Loan Amt.,Mazda,0.667
+New Car Loan Amt.,Nissan,-0.327
+New Car Loan Amt.,Subaru,0.673
+New Car Loan Amt.,CPI,0.916
+New Car Loan Amt.,Finance Rate of New Car (Weighted),0.528
+New Car Loan Amt.,New Car Loan Amt.,1.0
+New Car Loan Amt.,GDP Growth,0.254
+GDP Growth,Toyota,0.282
+GDP Growth,Honda,0.233
+GDP Growth,Mazda,0.365
+GDP Growth,Nissan,0.089
+GDP Growth,Subaru,0.317
+GDP Growth,CPI,0.229
+GDP Growth,Finance Rate of New Car (Weighted),-0.135
+GDP Growth,New Car Loan Amt.,0.254
+GDP Growth,GDP Growth,1.0

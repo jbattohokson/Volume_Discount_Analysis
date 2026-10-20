@@ -1,0 +1,6 @@
+Manufacturer,Elasticity_Coefficient_LogLoanAmt,P_Value,Significant_at_0.05,R_Squared,N_Observations
+Toyota,0.179,0.6115,False,0.1095,35
+Honda,-0.0279,0.9396,False,0.1058,35
+Mazda,-0.2329,0.3997,False,0.6228,35
+Nissan,-0.5498,0.3528,False,0.1256,35
+Subaru,1.9438,0.0104,True,0.508,35

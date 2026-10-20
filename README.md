@@ -1,95 +1,37 @@
-# Which Japanese automakers can raise prices without losing buyers?
-### The data ranks them.
+# Japanese Car Sales Price Elasticity Analysis (2008-2025)
 
-> **[Live Report](https://jbattohokson.github.io/Volume_Discount_Analysis/Volume_Discount_Analysis.html)** | **[Tableau Dashboard](https://public.tableau.com/app/profile/julian.batto.hokson/viz/Japanese_Car_Demand_Elasticity_Analysis/Dashboard2)** | [GitHub Repo](https://github.com/jbattohokson/Volume_Discount_Analysis)
+**Business question:** how does vehicle price affect US demand for five major Japanese automakers, and does price sensitivity differ by brand?
 
----
+## Important correction — read this before using this project's numbers anywhere
 
-## Executive Summary
+`docs/Japanese_Car_Demand_Elasticity_Report` claims a log-linear regression methodology and a specific figure ("Subaru: lowest price sensitivity, -0.76 elasticity"). **Testing this project on 2026-09-16 found that number is not reproducible.** None of the four Python script versions in this project's history (including the one previously shipped as final) ever actually ran a regression — all four compute the same median-split percent difference in average sales between high- and low-finance-rate periods, and call that "elasticity." That is a real, honest descriptive statistic, but it is not price elasticity of demand, and it does not produce -0.76 for Subaru or anything close to it.
 
-Price elasticity tells a pricing team exactly what a brand can get away with. A brand with low elasticity can raise prices with minimal volume loss. A brand with high elasticity bleeds buyers the moment it does. This analysis measures that number for Toyota, Honda, Nissan, Subaru, and Mazda across 17 years of US sales data (2008–2025), using CPI, finance rates, and GDP growth as controls in a log-linear OLS model.
+I added a real log-linear OLS regression (`export_regression_elasticity()`, file `09_regression_elasticity.csv`) using new car loan amount as the price proxy — there is no actual per-vehicle price column in this dataset, so loan amount is the closest available stand-in. Verified 3 times (OLS is deterministic, so this is really a code-correctness check, not a randomness check): **only Subaru's coefficient is statistically significant (p=0.0104), and it's +1.94 — the opposite sign of the report's claim, not -0.76.** None of the other four manufacturers reach significance at p<0.05.
 
-The results are not equal. Subaru's elasticity of −0.76 means a 3% price increase costs roughly 2.3% of volume — approximately 5,800 units on its current base. Nissan's elasticity of −1.45 means the same 3% increase costs 4.35% of volume — roughly 22,600 units. That difference is a strategic moat. GDP growth and financing rates are not background noise here; they are active demand drivers, and Nissan and Mazda face compounding exposure when both pressures rise simultaneously.
+**Do not use the "-0.76 Subaru elasticity" figure on a resume, in a cover letter, or in an interview** — it fails the zero-fabrication standard this portfolio should be held to, since it isn't produced by any version of the actual code. The honest headline from what the code actually shows: of the five brands, only Subaru's sales show a statistically significant relationship with financing conditions in this dataset, and demand rises (not falls) with loan amount — plausibly because Subaru's buyer base skews toward financed, feature-loaded trims rather than because higher prices increase demand. That's a real, interesting, defensible finding. The old -0.76 claim is not.
 
----
+## Pipeline
 
-## Tools & Technologies
+**`japanese_car_elasticity_analysis.py`** — loads 17 years of semi-annual sales, price-proxy, CPI, financing-rate, and GDP-growth data for Toyota, Honda, Mazda, Nissan, and Subaru; computes descriptive statistics, correlations, sensitivity buckets, and the real regression-based elasticity above; produces 4 charts and 9 Tableau-ready CSVs (was 8 — added `09_regression_elasticity.csv`).
 
-| Tool | Purpose |
-|------|---------|
-| Python (pandas, NumPy, Matplotlib, statsmodels) | Log-linear OLS regression, elasticity estimation, visualization |
-| SQL | Data warehouse queries and aggregation |
-| Tableau | Elasticity ranking visualization, brand volume trend charts |
-| FRED (CPI, GDP, finance rates) | Macroeconomic control variables |
-
----
-
-## Price Elasticity by Brand, Ranked Least to Most Sensitive
-
-Elasticity measures percentage volume loss per 1% price increase. Closer to zero means stronger pricing power.
-
-| Brand | Elasticity | 2008–2025 Growth | Strategic Position |
-|-------|-----------|-----------------|-------------------|
-| Subaru | −0.76 | +170.8% | Premium niche — pricing power |
-| Honda | −0.98 | −6.2% | Mid-market — margin via brand loyalty |
-| Toyota | −1.12 | +2.4% | Market leader — balanced pricing |
-| Mazda | −1.23 | +37.3% | Specialty — growth despite sensitivity |
-| Nissan | −1.45 | −1.1% | Value segment — volume trap |
-
-A 3% price increase on Subaru's line loses approximately 5,800 units annually. The same increase on Nissan's line loses approximately 22,600 units. Whether the per-unit margin gain outweighs the volume loss is a breakeven calculation — but these elasticities define the range of acceptable price moves for each brand.
-
----
-
-## Findings: What the data shows — and one interpretation by decision area
-
-### Subaru's brand positioning is a quantifiable pricing moat
-Subaru's −0.76 elasticity is the lowest in the analysis — buyers are the least responsive to price changes. Combined with +170.8% volume growth from 2008 to 2025, this is not a niche outcome: Subaru built genuine brand equity in specific segments that insulates it from competitive pricing pressure. A rough estimate puts the net revenue impact of a 3% price increase as positive — approximately $266M in additional revenue on the retained volume base versus ~$209M in lost volume revenue — before cost considerations. Volume discounting would erode exactly the brand equity creating that advantage.
-
-### Nissan is in a high-sensitivity, low-growth position
-Nissan's −1.45 elasticity is the highest in the analysis, and volume declined 1.1% from 2008 to 2025 while competitors grew. High price sensitivity combined with flat-to-declining volume is the signature of a brand competing primarily on price in a segment where that strategy has a ceiling. A 3% price increase on Nissan's line puts approximately $633M in revenue at risk (using an estimated $28K average transaction value) — a per-unit margin gain would need to be extraordinarily high to offset that loss. The path out is product differentiation toward a premium position, not a price cut that accelerates margin erosion.
-
-### A rate-hiking cycle hits Nissan and Mazda hardest
-Financing rates are a significant demand driver across all five brands — interest rate changes function as an effective price increase without any manufacturer action. The brands with the highest price sensitivity are also the most exposed when rates rise: their buyers are already price-conscious before financing costs are applied. A 100 basis point rate increase should trigger a Nissan and Mazda volume forecast revision before it triggers a price adjustment.
-
-### GDP growth is a usable leading indicator for annual volume planning
-Sales across all five manufacturers are pro-cyclical, growing during expansions and contracting during recessions. The 2008–2009 financial crisis, 2020 pandemic disruption, and 2022–2025 supply chain volatility are all visible in the trend data. A one-page sensitivity model mapping GDP scenarios to brand-level volume changes — using the elasticity coefficients from this analysis as inputs — gives planning teams a defensible range for inventory and production targets with no new data collection required.
-
----
-
-## Recommendations: Recommended next steps by stakeholder
-
-### Build a breakeven pricing table per brand
-For each brand, what price increase is exactly offset by volume loss? The elasticity coefficients make this one calculation. Subaru's breakeven price increase is materially higher than Nissan's — the output is a max price increase before revenue turns negative, per brand.
-
-### Target Honda's −0.98 as the repositioning benchmark for Nissan
-Compressing Nissan's elasticity from −1.45 toward Honda's −0.98 requires product differentiation that reduces buyer price sensitivity — EV investment and technology-led models are the primary mechanism. The gap of 0.47 elasticity points translates to recovering ~13,000+ units of volume buffer on a 3% price move.
-
-### Run rate-sensitivity scenarios quarterly
-Map 50 bp and 100 bp rate increases to brand-level volume impact using the financing rate correlations in this analysis. Flag Nissan and Mazda for volume forecast revision in rising-rate environments. This is achievable as a one-page scenario table added to the quarterly demand forecast.
-
-### Time Subaru price increases to new model launches
-Subaru has pricing authority its competitors lack. Price increases tied to new launches reinforce the premium position rather than triggering price-comparison behavior. Avoid discount programs that pull Subaru into price competition with Nissan and Mazda.
-
----
-
-## Model Specification and Data Scope
-
-### Log-linear OLS price elasticity model
-
-A log-linear specification allows direct coefficient interpretation as elasticities, controlling for GDP, financing rates, gas prices, disposable income, unemployment, and USD/JPY exchange rate simultaneously.
-
-```
-ln(Sales) = b0 + b1*ln(Price) + b2*ln(GasPrice) + b3*InterestRate 
-          + b4*ln(Income) + b5*Unemployment + b6*ln(ExchangeRate) + e
+```bash
+pip install -r requirements.txt
+python "python/japanese_car_elasticity_analysis.py"
 ```
 
-Constant elasticity is assumed across the full 2008–2025 period. Elasticity likely shifted after 2020 due to supply chain constraints and inventory-driven pricing. A follow-on model splitting pre- and post-2020 would test whether elasticities are stable or regime-dependent.
+## Tools
 
-| Dimension | Value |
-|-----------|-------|
-| Analysis period | 2008 to 2025 (17 years, semi-annual observations) |
-| Manufacturers | Toyota, Honda, Nissan, Subaru, Mazda |
-| Sales data | GoodCarBadCar.net — annual US sales by manufacturer |
-| Economic controls | CPI, finance rates, GDP growth, loan availability, disposable income, USD/JPY (FRED) |
-| Modeling | Python — Statsmodels OLS |
-| Visualization | Matplotlib, Seaborn, Tableau Public |
+Python (pandas, NumPy, statsmodels, matplotlib, seaborn), Tableau Public.
+
+## Dashboard
+
+*(Add the public.tableau.com link for `Japanese_Car_Demand_Elasticity_Analysis`. Before publishing, update any dashboard text/tooltips that cite the old -0.76 figure — check `tableau/Japanese_Car_Demand_Elasticity_Analysis.twbx` for a calculated field or text box referencing it.)*
+
+## Bugs found and fixed while testing this pipeline (2026-09-16)
+
+1. **The script could not run from a fresh clone.** It looked for the CSV in its own folder (`python/`) instead of `data/`, and used a lowercase `tableau_data` export path that would have created a duplicate folder next to the existing `Tableau_Data/`. Fixed with a multi-candidate path search.
+2. **No version of the code ever implemented the regression methodology the written report claims.** See the correction above — this is the most consequential fix in this project.
+
+## Repo hygiene note
+
+Four script versions (base, `_Claude_Change`, `_V2`, `_V3`) were consolidated into one file, `japanese_car_elasticity_analysis.py`, based on `_V3` plus the regression fix above.

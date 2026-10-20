@@ -1,0 +1,11 @@
+Manufacturer,Metric_Type,High_Rate_Avg_Sales,Low_Rate_Avg_Sales,Sensitivity_Percent,Positive_GDP_Avg_Sales,Negative_GDP_Avg_Sales
+Toyota,Finance_Rate_Sensitivity,951840.0,903011.0,5.41,,
+Honda,Finance_Rate_Sensitivity,640592.0,635008.0,0.88,,
+Mazda,Finance_Rate_Sensitivity,157192.0,142139.0,10.59,,
+Nissan,Finance_Rate_Sensitivity,512126.0,527034.0,-2.83,,
+Subaru,Finance_Rate_Sensitivity,282494.0,225581.0,25.23,,
+Toyota,GDP_Growth_Sensitivity,,,25.26,943028.0,752864.0
+Honda,GDP_Growth_Sensitivity,,,23.0,648106.0,526936.0
+Mazda,GDP_Growth_Sensitivity,,,34.87,152838.0,113319.0
+Nissan,GDP_Growth_Sensitivity,,,47.53,534555.0,362330.0
+Subaru,GDP_Growth_Sensitivity,,,70.17,262503.0,154260.0
