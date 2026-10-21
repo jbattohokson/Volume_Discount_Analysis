@@ -5,12 +5,12 @@ Run directly in VSCode terminal
 """
 
 import os
+import sys
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # headless: charts are only written to disk
 import matplotlib.pyplot as plt
-import seaborn as sns
-import warnings
-warnings.filterwarnings('ignore')
 
 # TESTED 2026-09-16: running this script as-is failed immediately with
 # "CSV not found" on every run. SCRIPT_DIR assumed the CSV lived next to the
@@ -30,6 +30,9 @@ _csv_candidates = [
 ]
 CSV_FILE = next((p for p in _csv_candidates if os.path.exists(p)), _csv_candidates[0])
 EXPORT_DIR = os.path.join(SCRIPT_DIR, "Tableau_Data")
+# Charts used to be written next to the script, leaving a second, stale copy of
+# every PNG beside the committed python/Python_Charts/ set.
+CHART_DIR = os.path.join(SCRIPT_DIR, "Python_Charts")
 
 MANUFACTURERS = ['Toyota', 'Honda', 'Mazda', 'Nissan', 'Subaru']
 
@@ -124,7 +127,7 @@ class CarSalesAnalysis:
         print("="*80)
 
         if self.finance_col:
-            print("\nPrice Elasticity (Finance Rate Impact):")
+            print("\nFinance-Rate Sensitivity (median split of periods; NOT a price elasticity):")
             print("-"*80)
             median_rate = self.df[self.finance_col].median()
             high_mask = self.df[self.finance_col] > median_rate
@@ -133,10 +136,10 @@ class CarSalesAnalysis:
                 low  = self.df.loc[~high_mask, mfg].mean()
                 pct  = ((high - low) / low * 100) if low > 0 else float('nan')
                 print(f"  {mfg:10} | High Rate Avg: {high:>10,.0f} | Low Rate Avg: {low:>10,.0f} | "
-                      f"Elasticity: {pct:>+7.1f}%")
+                      f"Difference: {pct:>+7.1f}%")
 
         if self.gdp_col:
-            print("\nIncome Elasticity (GDP Growth Impact):")
+            print("\nGDP-Growth Sensitivity (positive vs negative growth periods):")
             print("-"*80)
             pos_mask = self.df[self.gdp_col] > 0
             for mfg in MANUFACTURERS:
@@ -144,7 +147,7 @@ class CarSalesAnalysis:
                 neg = self.df.loc[~pos_mask, mfg].mean()
                 pct = ((pos - neg) / neg * 100) if neg > 0 else float('nan')
                 print(f"  {mfg:10} | Positive GDP Avg: {pos:>10,.0f} | Negative GDP Avg: {neg:>10,.0f} | "
-                      f"Elasticity: {pct:>+7.1f}%")
+                      f"Difference: {pct:>+7.1f}%")
 
     # -------------------------------------------------------------------------
     def market_analysis(self):
@@ -186,7 +189,7 @@ class CarSalesAnalysis:
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        path = os.path.join(SCRIPT_DIR, 'sales_trend.png')
+        path = os.path.join(CHART_DIR, 'sales_trend.png')
         plt.savefig(path, dpi=150)
         print(f"  Saved: sales_trend.png")
         plt.close()
@@ -205,7 +208,7 @@ class CarSalesAnalysis:
         plt.title('Market Share by Manufacturer (2008-2025)')
         plt.xlim(0, shares.max() * 1.15)
         plt.tight_layout()
-        path = os.path.join(SCRIPT_DIR, 'market_share.png')
+        path = os.path.join(CHART_DIR, 'market_share.png')
         plt.savefig(path, dpi=150)
         print(f"  Saved: market_share.png")
         plt.close()
@@ -223,9 +226,9 @@ class CarSalesAnalysis:
         plt.barh(MANUFACTURERS, corrs, color=colors)
         plt.axvline(0, color='black', linewidth=1)
         plt.xlabel('Correlation with Finance Rate')
-        plt.title('Price Sensitivity by Manufacturer')
+        plt.title('Correlation of Sales with Finance Rate (not a price elasticity)')
         plt.tight_layout()
-        path = os.path.join(SCRIPT_DIR, 'elasticity_comparison.png')
+        path = os.path.join(CHART_DIR, 'elasticity_comparison.png')
         plt.savefig(path, dpi=150)
         print(f"  Saved: elasticity_comparison.png")
         plt.close()
@@ -252,7 +255,7 @@ class CarSalesAnalysis:
                 ax.set_visible(False)
 
         plt.tight_layout()
-        path = os.path.join(SCRIPT_DIR, 'economic_impact.png')
+        path = os.path.join(CHART_DIR, 'economic_impact.png')
         plt.savefig(path, dpi=150)
         print(f"  Saved: economic_impact.png")
         plt.close()
@@ -263,6 +266,7 @@ class CarSalesAnalysis:
         print("JAPANESE CAR SALES ELASTICITY ANALYSIS — Full Report")
         print("="*80)
 
+        os.makedirs(CHART_DIR, exist_ok=True)
         self.descriptive_stats()
         self.correlation_analysis()
         self.elasticity_analysis()
@@ -431,6 +435,13 @@ class TableauExporter:
         does not match the report's claimed elasticity figures, and the report
         should be corrected or the claim removed before this project is used
         on a resume or discussed in an interview -- see README.
+
+        AUDITED 2026-10-21: this spec is kept for continuity, but its p-values
+        are not trustworthy. Residuals are heavily autocorrelated (Durbin-Watson
+        0.16 for Subaru, 0.32-1.06 for the rest; ~2 means none), and ln(loan)
+        correlates 0.96 with time, so the Subaru coefficient mostly measures
+        "Subaru grew while loans grew". export_regression_robustness() (file 10)
+        re-fits it with a trend and in first differences.
         """
         import statsmodels.api as sm
 
@@ -462,6 +473,83 @@ class TableauExporter:
             })
 
         return self._save(pd.DataFrame(rows), "09_regression_elasticity.csv")
+
+    def regression_robustness(self):
+        """
+        Re-fit the loan-amount model three ways per manufacturer and say whether
+        any coefficient survives all three. Returns one row per (brand, spec).
+
+          levels        ln(sales) ~ ln(loan) + CPI + GDP           (file 09's spec)
+          levels_trend  ln(sales) ~ ln(real loan) + rate + GDP + trend + H2
+          differences   d.ln(sales) ~ d.ln(real loan) + d.rate + d.GDP + d.H2
+
+        real loan = loan / CPI * 100, so inflation isn't read as a "price" rise.
+        H2 is a second-half-of-year dummy (sales are semi-annual). The trend and
+        differences specs use Newey-West (HAC, 2 lags) standard errors because the
+        residuals are autocorrelated; Durbin-Watson is reported for each fit.
+        """
+        import statsmodels.api as sm
+        from statsmodels.stats.stattools import durbin_watson
+
+        if not all([self.loan_col, self.cpi_col, self.gdp_col, self.finance_col, self.period_col]):
+            return pd.DataFrame()
+        d = self.df.copy()
+        d['ln_loan'] = np.log(d[self.loan_col])
+        d['ln_real_loan'] = np.log(d[self.loan_col] / d[self.cpi_col] * 100)
+        d['trend'] = np.arange(len(d))
+        d['H2'] = d[self.period_col].astype(str).str.strip().str.upper().str.startswith('H2').astype(int)
+        hac = {'cov_type': 'HAC', 'cov_kwds': {'maxlags': 2}}
+
+        rows = []
+        for mfg in MANUFACTURERS:
+            y = np.log(d[mfg].where(d[mfg] > 0))
+            specs = {
+                'levels': (y, d[['ln_loan', self.cpi_col, self.gdp_col]], 'ln_loan', {}),
+                'levels_trend': (y, d[['ln_real_loan', self.finance_col, self.gdp_col, 'trend', 'H2']],
+                                 'ln_real_loan', hac),
+                'differences': (y.diff(), d[['ln_real_loan', self.finance_col, self.gdp_col, 'H2']].diff(),
+                                'ln_real_loan', hac),
+            }
+            for spec, (yy, X, key, fit_kw) in specs.items():
+                ok = yy.notna() & X.notna().all(axis=1)
+                if ok.sum() < X.shape[1] + 4:
+                    continue
+                fit = sm.OLS(yy[ok], sm.add_constant(X[ok])).fit(**fit_kw)
+                rows.append({
+                    'Manufacturer': mfg,
+                    'Spec': spec,
+                    'Loan_Coefficient': round(float(fit.params[key]), 4),
+                    'P_Value': round(float(fit.pvalues[key]), 4),
+                    'Significant_at_0.05': bool(fit.pvalues[key] < 0.05),
+                    'Durbin_Watson': round(float(durbin_watson(fit.resid)), 2),
+                    'N_Observations': int(fit.nobs),
+                })
+        out = pd.DataFrame(rows)
+        if out.empty:
+            return out
+        # Robust = significant with the same sign in every spec that was fitted
+        verdict = out.groupby('Manufacturer').apply(
+            lambda g: bool(g['Significant_at_0.05'].all() and np.sign(g['Loan_Coefficient']).nunique() == 1),
+            include_groups=False,
+        )
+        out['Robust_Across_Specs'] = out['Manufacturer'].map(verdict)
+        return out
+
+    def export_regression_robustness(self):
+        """10 — Loan-amount coefficient under three specifications (see regression_robustness)."""
+        print("\n Exporting Regression Robustness Checks...")
+        out = self.regression_robustness()
+        if not out.empty:
+            wide = out.pivot(index='Manufacturer', columns='Spec', values='Loan_Coefficient')
+            pv = out.pivot(index='Manufacturer', columns='Spec', values='P_Value')
+            print("  Loan coefficient (p-value) by spec:")
+            for mfg in wide.index:
+                cells = '  '.join(f"{spec}: {wide.loc[mfg, spec]:+.2f} (p={pv.loc[mfg, spec]:.3f})"
+                                  for spec in ['levels', 'levels_trend', 'differences'] if spec in wide.columns)
+                print(f"    {mfg:8} {cells}")
+            robust = sorted(out.loc[out['Robust_Across_Specs'], 'Manufacturer'].unique())
+            print(f"  Robust across all specs: {', '.join(robust) if robust else 'none'}")
+        return self._save(out, "10_regression_robustness.csv")
 
     def export_correlation_matrix(self):
         """05 — Long-format correlation matrix."""
@@ -553,6 +641,7 @@ class TableauExporter:
             self.export_market_share(),
             self.export_elasticity_metrics(),
             self.export_regression_elasticity(),
+            self.export_regression_robustness(),
             self.export_correlation_matrix(),
             self.export_growth_rates(),
             self.export_time_series_analysis(),
@@ -580,10 +669,9 @@ if __name__ == "__main__":
         exporter = TableauExporter(analysis.df, EXPORT_DIR)
         exporter.export_all()
 
+    # Exit non-zero on failure: the old handlers printed the error and exited 0,
+    # so a broken run looked successful to anything checking the exit code.
     except FileNotFoundError as e:
         print(f"\n ERROR: {e}")
-        print(f"Make sure '{os.path.basename(CSV_FILE)}' is in:\n  {SCRIPT_DIR}")
-
-    except Exception as e:
-        print(f"\n ERROR: {e}")
-        print("Check: CSV exists, required packages installed, column names match CSV.")
+        print(f"Make sure '{os.path.basename(CSV_FILE)}' is in:\n  {os.path.join(PROJECT_DIR, 'data')}")
+        sys.exit(1)

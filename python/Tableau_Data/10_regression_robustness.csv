@@ -1,0 +1,16 @@
+Manufacturer,Spec,Loan_Coefficient,P_Value,Significant_at_0.05,Durbin_Watson,N_Observations,Robust_Across_Specs
+Toyota,levels,0.179,0.6115,False,0.74,35,False
+Toyota,levels_trend,-0.8992,0.0383,True,0.91,35,False
+Toyota,differences,-0.2645,0.7318,False,2.62,34,False
+Honda,levels,-0.0279,0.9396,False,0.7,35,False
+Honda,levels_trend,-1.1829,0.0238,True,0.75,35,False
+Honda,differences,-1.508,0.1089,False,2.54,34,False
+Mazda,levels,-0.2329,0.3997,False,1.06,35,False
+Mazda,levels_trend,-1.5171,0.0,True,1.46,35,False
+Mazda,differences,-0.1793,0.7709,False,2.25,34,False
+Nissan,levels,-0.5498,0.3528,False,0.32,35,False
+Nissan,levels_trend,-2.808,0.0006,True,0.25,35,False
+Nissan,differences,-2.1227,0.015,True,2.69,34,False
+Subaru,levels,1.9438,0.0104,True,0.16,35,False
+Subaru,levels_trend,-1.7386,0.0403,True,0.27,35,False
+Subaru,differences,-0.4188,0.5217,False,2.67,34,False

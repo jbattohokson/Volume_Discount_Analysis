@@ -1,37 +1,73 @@
-# Japanese Car Sales Price Elasticity Analysis (2008-2025)
+# Japanese Automaker US Demand Analysis (2008–2025)
 
-**Business question:** how does vehicle price affect US demand for five major Japanese automakers, and does price sensitivity differ by brand?
+*(Repo name: `Volume_Discount_Analysis`. The project inside is a demand and price-sensitivity study of five Japanese automakers.)*
 
-## Important correction — read this before using this project's numbers anywhere
+## The problem
 
-`docs/Japanese_Car_Demand_Elasticity_Report` claims a log-linear regression methodology and a specific figure ("Subaru: lowest price sensitivity, -0.76 elasticity"). **Testing this project on 2026-09-16 found that number is not reproducible.** None of the four Python script versions in this project's history (including the one previously shipped as final) ever actually ran a regression — all four compute the same median-split percent difference in average sales between high- and low-finance-rate periods, and call that "elasticity." That is a real, honest descriptive statistic, but it is not price elasticity of demand, and it does not produce -0.76 for Subaru or anything close to it.
+How does price affect US demand for Toyota, Honda, Nissan, Subaru and Mazda, and does price sensitivity differ by brand? A pricing or incentive team would want that answer before deciding where discounts actually move volume.
 
-I added a real log-linear OLS regression (`export_regression_elasticity()`, file `09_regression_elasticity.csv`) using new car loan amount as the price proxy — there is no actual per-vehicle price column in this dataset, so loan amount is the closest available stand-in. Verified 3 times (OLS is deterministic, so this is really a code-correctness check, not a randomness check): **only Subaru's coefficient is statistically significant (p=0.0104), and it's +1.94 — the opposite sign of the report's claim, not -0.76.** None of the other four manufacturers reach significance at p<0.05.
+## What the data can and can't answer
 
-**Do not use the "-0.76 Subaru elasticity" figure on a resume, in a cover letter, or in an interview** — it fails the zero-fabrication standard this portfolio should be held to, since it isn't produced by any version of the actual code. The honest headline from what the code actually shows: of the five brands, only Subaru's sales show a statistically significant relationship with financing conditions in this dataset, and demand rises (not falls) with loan amount — plausibly because Subaru's buyer base skews toward financed, feature-loaded trims rather than because higher prices increase demand. That's a real, interesting, defensible finding. The old -0.76 claim is not.
+The dataset (`data/Japanese_Car_Sales_Elasticity.csv`) has 35 half-year periods (H1 2008 to H1 2025) of unit sales per brand, plus CPI, the weighted new-car finance rate, the average new-car loan amount and GDP growth. **It has no vehicle prices.** So it can show growth, share, and how sales moved with financing and the economy, but **it cannot measure price elasticity**. That conclusion is the main finding, and the robustness checks below are what support it.
 
-## Pipeline
+## Findings
 
-**`japanese_car_elasticity_analysis.py`** — loads 17 years of semi-annual sales, price-proxy, CPI, financing-rate, and GDP-growth data for Toyota, Honda, Mazda, Nissan, and Subaru; computes descriptive statistics, correlations, sensitivity buckets, and the real regression-based elasticity above; produces 4 charts and 9 Tableau-ready CSVs (was 8 — added `09_regression_elasticity.csv`).
+1. **Subaru is the growth story.** Sales rose 170.8% from H1 2008 to H1 2025, and its share of the five-brand group went from 4.8% to 11.8%. Mazda grew 37.3%, Toyota 2.3%; Nissan (−1.1%) and Honda (−6.2%) ended below where they started.
+2. **2020 hit Nissan hardest.** H1 2020 vs H1 2019: Nissan −39.9%, Honda −23.8%, Subaru −21.2%, Toyota −16.8%, Mazda −7.0%. By H1 2025 Nissan was still about 30% below H1 2019, and its decline started after 2017. It's a brand problem, not just a macro one.
+3. **Financing rates don't line up the way you'd expect.** Splitting periods at the median finance rate, four of five brands sold *more* in high-rate periods (Subaru +25.2%). Rates and sales both rose over time, so this comparison picks up the long-run trend, not a rate effect.
+4. **No price-proxy coefficient is robust.** Using loan amount as the closest available price proxy:
+
+   | Brand | Levels (original) | + trend, H2 dummy, real loan (HAC) | Half-year changes (HAC) |
+   |---|---|---|---|
+   | Toyota | +0.18 (p=0.61) | −0.90 (p=0.04) | −0.26 (p=0.73) |
+   | Honda | −0.03 (p=0.94) | −1.18 (p=0.02) | −1.51 (p=0.11) |
+   | Mazda | −0.23 (p=0.40) | −1.52 (p<0.001) | −0.18 (p=0.77) |
+   | Nissan | −0.55 (p=0.35) | −2.81 (p=0.001) | −2.12 (p=0.015) |
+   | Subaru | **+1.94 (p=0.01)** | −1.74 (p=0.04) | −0.42 (p=0.52) |
+
+   The original spec's one "significant" result, Subaru +1.94, is an artifact. Its residuals are heavily autocorrelated (Durbin-Watson 0.16; 2 means none), so the p-value is invalid. The coefficient flips sign once a time trend is added and isn't significant in half-year changes. No brand's coefficient keeps the same sign and significance across all three specs. Loan amounts move almost in lockstep with time (r = 0.96 nominal, 0.88 after inflation), so this data can't separate price from long-run growth.
+
+## Recommendations
+
+- **Don't set discount policy from this data.** Nothing here supports a brand-level price elasticity.
+- **To measure elasticity:** join an average transaction price series per brand and half-year, then fit `ln(sales) ~ ln(price) + finance rate + GDP + trend + H2` per brand with HAC errors. Split pre- and post-2020, because 2021–22 supply shortages capped sales regardless of demand.
+- **Nissan's post-2017 slide** is worth a brand-level look (product cycle, fleet mix, incentives), since the macro variables don't explain it.
+
+## Run it
 
 ```bash
 pip install -r requirements.txt
-python "python/japanese_car_elasticity_analysis.py"
+python python/japanese_car_elasticity_analysis.py   # charts -> python/Python_Charts/, CSVs -> python/Tableau_Data/
+python -m pytest tests/
 ```
+
+Outputs: 4 charts and 10 Tableau-ready CSVs. `09_regression_elasticity.csv` is the original levels spec; `10_regression_robustness.csv` holds the three-spec comparison above.
 
 ## Tools
 
-Python (pandas, NumPy, statsmodels, matplotlib, seaborn), Tableau Public.
+Python (pandas, NumPy, statsmodels, matplotlib), Tableau Public, pytest.
 
 ## Dashboard
 
-*(Add the public.tableau.com link for `Japanese_Car_Demand_Elasticity_Analysis`. Before publishing, update any dashboard text/tooltips that cite the old -0.76 figure — check `tableau/Japanese_Car_Demand_Elasticity_Analysis.twbx` for a calculated field or text box referencing it.)*
+Tableau workbook and PDFs are in `tableau/`. *(Public Tableau link still to be added. Before publishing, check the `.twbx` for any text that cites the old −0.76 Subaru figure.)*
 
-## Bugs found and fixed while testing this pipeline (2026-09-16)
+## Correction notice
 
-1. **The script could not run from a fresh clone.** It looked for the CSV in its own folder (`python/`) instead of `data/`, and used a lowercase `tableau_data` export path that would have created a duplicate folder next to the existing `Tableau_Data/`. Fixed with a multi-candidate path search.
-2. **No version of the code ever implemented the regression methodology the written report claims.** See the correction above — this is the most consequential fix in this project.
+`docs/Japanese_Car_Demand_Elasticity_Report` (PDF/DOCX) claims a log-linear regression and a "Subaru −0.76 elasticity". No version of the code ever produced that number, and the data has no price column to produce it from. **Don't cite −0.76, and don't cite the +1.94 either** (see finding 4). The HTML page, `Volume_Discount_Analysis.html`, is the current write-up.
 
-## Repo hygiene note
+## Audit log
 
-Four script versions (base, `_Claude_Change`, `_V2`, `_V3`) were consolidated into one file, `japanese_car_elasticity_analysis.py`, based on `_V3` plus the regression fix above.
+**2026-10-21 audit and rebuild**
+- Added `regression_robustness()` (file 10): the loan model refit with a trend, a half-year dummy, CPI-deflated loans and Newey-West errors, and again in first differences, with Durbin-Watson reported for each fit. It showed the Subaru result was spurious; the README previously called it "a real, interesting, defensible finding".
+- Console and chart labels no longer call the median-split comparison or the rate correlation an "elasticity" or "price sensitivity".
+- Charts were written to `python/` while committed copies lived in `python/Python_Charts/`, leaving two diverging sets. Charts now go to `Python_Charts/` only, and the stale duplicates were removed.
+- A failed run used to print `ERROR` and exit 0. It now exits non-zero.
+- Removed the blanket `warnings.filterwarnings('ignore')`, which hid pandas/statsmodels warnings.
+- Page fix: Toyota growth is +2.3%, not +2.4% (1,058,767 / 1,034,500). Added the robustness result to the page.
+- Tests added (`tests/test_analysis.py`): recovery of a planted elasticity on synthetic data, the real-data result (nothing robust), parity with file 09, a zero-sales period, missing columns, and the median-split math.
+
+**2026-09-16**
+1. The script couldn't run from a fresh clone: it looked for the CSV in `python/` rather than `data/`, and exported to a lowercase `tableau_data` folder. Fixed.
+2. No version of the code implemented the regression the written report claims. A real OLS was added (file 09).
+
+Four script versions (base, `_Claude_Change`, `_V2`, `_V3`) were consolidated into one file.
