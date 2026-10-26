@@ -1,18 +1,20 @@
-# Japanese Car Sales Price Elasticity Analysis (2008-2025)
+# Volume Discount Analysis: Japanese Auto Sales vs. Financing Conditions (2008-2025)
 
-**Business question:** how does vehicle price affect US demand for five major Japanese automakers, and does price sensitivity differ by brand?
+**Business question:** how did US sales volume change for five Japanese automakers (Toyota, Honda, Mazda, Nissan, Subaru) from 2008 to 2025, and does any brand's volume move with financing conditions?
 
-## Important correction — read this before using this project's numbers anywhere
+## Key findings
 
-`docs/Japanese_Car_Demand_Elasticity_Report` claims a log-linear regression methodology and a specific figure ("Subaru: lowest price sensitivity, -0.76 elasticity"). **Testing this project on 2026-09-16 found that number is not reproducible.** None of the four Python script versions in this project's history (including the one previously shipped as final) ever actually ran a regression — all four compute the same median-split percent difference in average sales between high- and low-finance-rate periods, and call that "elasticity." That is a real, honest descriptive statistic, but it is not price elasticity of demand, and it does not produce -0.76 for Subaru or anything close to it.
+- **Subaru nearly tripled its US sales:** +170.8% from H1 2008 to H1 2025, the fastest growth of the five. Mazda grew 37.3% and Toyota 2.4%, while Nissan (-1.1%) and Honda (-6.2%) shrank.
+- **Toyota is the volume leader** with 37.3% of the five brands' combined sales.
+- **Only Subaru's sales track financing conditions.** A log-linear regression of sales on average new-car loan amount is statistically significant for Subaru alone (coefficient +1.94, p = 0.01). Subaru's volume rises with loan size, which fits a buyer base that finances higher-trim cars. None of the other four brands reach significance at p < 0.05.
 
-I added a real log-linear OLS regression (`export_regression_elasticity()`, file `09_regression_elasticity.csv`) using new car loan amount as the price proxy — there is no actual per-vehicle price column in this dataset, so loan amount is the closest available stand-in. Verified 3 times (OLS is deterministic, so this is really a code-correctness check, not a randomness check): **only Subaru's coefficient is statistically significant (p=0.0104), and it's +1.94 — the opposite sign of the report's claim, not -0.76.** None of the other four manufacturers reach significance at p<0.05.
+## Data honesty
 
-**Do not use the "-0.76 Subaru elasticity" figure on a resume, in a cover letter, or in an interview** — it fails the zero-fabrication standard this portfolio should be held to, since it isn't produced by any version of the actual code. The honest headline from what the code actually shows: of the five brands, only Subaru's sales show a statistically significant relationship with financing conditions in this dataset, and demand rises (not falls) with loan amount — plausibly because Subaru's buyer base skews toward financed, feature-loaded trims rather than because higher prices increase demand. That's a real, interesting, defensible finding. The old -0.76 claim is not.
+The dataset has no per-vehicle price column, so this project does **not** measure price elasticity of demand. Loan amount is used as the closest available stand-in for what buyers spend, and the regression above is reported as a financing relationship, not a price elasticity. An earlier written report in this repo presented median-split percent differences as "elasticities" (for example -0.76 for Subaru). No version of the code produces those figures, so that report has been removed. The project page (`Volume_Discount_Analysis.html`) lays out what extra data would be needed to measure true price elasticity.
 
 ## Pipeline
 
-**`japanese_car_elasticity_analysis.py`** — loads 17 years of semi-annual sales, price-proxy, CPI, financing-rate, and GDP-growth data for Toyota, Honda, Mazda, Nissan, and Subaru; computes descriptive statistics, correlations, sensitivity buckets, and the real regression-based elasticity above; produces 4 charts and 9 Tableau-ready CSVs (was 8 — added `09_regression_elasticity.csv`).
+**`japanese_car_elasticity_analysis.py`**: loads 17 years of semi-annual sales, price-proxy, CPI, financing-rate, and GDP-growth data for Toyota, Honda, Mazda, Nissan, and Subaru; computes descriptive statistics, correlations, sensitivity buckets, growth rates, and the loan-amount regression above; produces 4 charts and 9 Tableau-ready CSVs (was 8 — added `09_regression_elasticity.csv`).
 
 ```bash
 pip install -r requirements.txt
@@ -25,12 +27,12 @@ Python (pandas, NumPy, statsmodels, matplotlib, seaborn), Tableau Public.
 
 ## Dashboard
 
-*(Add the public.tableau.com link for `Japanese_Car_Demand_Elasticity_Analysis`. Before publishing, update any dashboard text/tooltips that cite the old -0.76 figure — check `tableau/Japanese_Car_Demand_Elasticity_Analysis.twbx` for a calculated field or text box referencing it.)*
+Tableau workbook: `tableau/Japanese_Car_Demand_Elasticity_Analysis.twbx`, with PDF exports in `tableau/`. Note: one chart in `JPCE_Tableau_Dashboard_2.pdf` labels the median-split finance-rate comparison "Avg. Elasticity Percent". It is a percent difference in average sales between high- and low-rate periods, not an elasticity.
 
 ## Bugs found and fixed while testing this pipeline (2026-09-16)
 
 1. **The script could not run from a fresh clone.** It looked for the CSV in its own folder (`python/`) instead of `data/`, and used a lowercase `tableau_data` export path that would have created a duplicate folder next to the existing `Tableau_Data/`. Fixed with a multi-candidate path search.
-2. **No version of the code ever implemented the regression methodology the written report claims.** See the correction above — this is the most consequential fix in this project.
+2. **No version of the code ever implemented the regression methodology the old written report claimed.** A real log-linear regression was added (`09_regression_elasticity.csv`), and the old report was removed. See Data honesty above.
 
 ## Repo hygiene note
 
